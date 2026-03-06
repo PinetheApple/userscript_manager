@@ -111,8 +111,7 @@ Page navigation
 | `GM_listValues` | ✓ | |
 | `GM_xmlhttpRequest` | ✓ | Uses SW fetch (bypasses page CORS) |
 | `GM_addStyle` | ✓ | Executes in MAIN world, no SW round-trip |
-| `GM_log` | ✓ | Relayed to editor ConsolePanel |
-| `GM_info` | ✓ | Static object — name, version, scriptHandler |
+| `GM_info` | ✓ | Always available — no @grant needed |
 
 ## Testing
 

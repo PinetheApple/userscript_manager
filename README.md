@@ -101,6 +101,7 @@ All GM_ methods are Promise-based. Storage is scoped per script.
 |----------|--------|
 | `Ctrl+S` | Save script |
 | `Alt+Z` | Toggle word wrap |
+| `Ctrl+\`` | Toggle metadata/console panel |
 
 ## Project structure
 

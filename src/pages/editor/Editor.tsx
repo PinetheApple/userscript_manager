@@ -36,9 +36,9 @@ function makeDefaultScript(): IUserScript {
 }
 
 const PANEL_HEIGHT_DEFAULT = 220;
-const PANEL_HEIGHT_MIN = 80;
-const PANEL_HEIGHT_MAX = 600;
-const TOOLBAR_HEIGHT = 41; // px — keep in sync with toolbar
+const SNAP_CLOSE_THRESHOLD = 60;
+const TOOLBAR_HEIGHT = 41;
+const DRAG_HANDLE_HEIGHT = 5;
 
 export function Editor() {
   const { scripts, loading, createScript, updateScript } = useScripts();
@@ -58,7 +58,7 @@ export function Editor() {
 
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  const dragRef = useRef<{ startY: number; startHeight: number; currentHeight: number } | null>(null);
   const wrapCompartment = useRef(new Compartment());
 
   // Load script
@@ -123,7 +123,7 @@ export function Editor() {
       view.destroy();
       viewRef.current = null;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync word wrap toggle into the editor
   useEffect(() => {
@@ -161,17 +161,26 @@ export function Editor() {
 
   const onDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    dragRef.current = { startY: e.clientY, startHeight: panelHeight };
+    dragRef.current = { startY: e.clientY, startHeight: panelHeight, currentHeight: panelHeight };
 
     const onMove = (e: MouseEvent) => {
       if (!dragRef.current) return;
-      // Dragging up increases panel height (delta is negative when moving up)
       const delta = dragRef.current.startY - e.clientY;
-      const next = Math.min(PANEL_HEIGHT_MAX, Math.max(PANEL_HEIGHT_MIN, dragRef.current.startHeight + delta));
-      setPanelHeight(next);
+      const raw = dragRef.current.startHeight + delta;
+      const maxH = window.innerHeight - TOOLBAR_HEIGHT - DRAG_HANDLE_HEIGHT;
+      const next = Math.min(maxH, Math.max(0, raw));
+      dragRef.current.currentHeight = next;
+      // Keep panel visible at minimum while dragging so handle stays accessible
+      setPanelHeight(Math.min(maxH, Math.max(SNAP_CLOSE_THRESHOLD, raw)));
     };
 
     const onUp = () => {
+      if (dragRef.current) {
+        if (dragRef.current.currentHeight < SNAP_CLOSE_THRESHOLD) {
+          setShowPanel(false);
+          setPanelHeight(PANEL_HEIGHT_DEFAULT);
+        }
+      }
       dragRef.current = null;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -193,10 +202,13 @@ export function Editor() {
         e.preventDefault();
         setWordWrap(w => !w);
       }
+      if (e.key === '`' && e.ctrlKey) {
+        e.preventDefault();
+        setShowPanel(p => !p);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saving, script, code, scriptId, wordWrap]);
 
   // ── Save ────────────────────────────────────────────────────────────────────
@@ -316,22 +328,24 @@ export function Editor() {
             {/* Drag handle */}
             <div
               onMouseDown={onDragStart}
-              className="group shrink-0 h-[5px] cursor-ns-resize flex items-center justify-center bg-transparent hover:bg-accent/20 transition-colors"
+              className="group shrink-0 h-1.25 cursor-ns-resize flex items-center justify-center bg-transparent hover:bg-accent/20 transition-colors"
               title="Drag to resize"
             >
-              <div className="w-8 h-[2px] rounded-full bg-zinc-700 group-hover:bg-accent/60 transition-colors" />
+              <div className="w-8 h-0.5 rounded-full bg-zinc-700 group-hover:bg-accent/60 transition-colors" />
             </div>
 
-            <div style={{ height: panelHeight }} className="shrink-0 overflow-hidden flex flex-col border-t border-border">
+            <div style={{ height: panelHeight }} className="shrink-0 flex flex-col border-t border-border overflow-hidden">
               {activeTab === 'metadata' && script ? (
-                <div className="overflow-auto h-full">
+                <div className="flex-1 min-h-0 overflow-y-auto">
                   <MetadataForm script={script} onChange={handleMetadataChange} />
                 </div>
               ) : activeTab === 'console' ? (
-                <ConsolePanel
-                  entries={consoleEntries}
-                  onClear={() => setConsoleEntries([])}
-                />
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <ConsolePanel
+                    entries={consoleEntries}
+                    onClear={() => setConsoleEntries([])}
+                  />
+                </div>
               ) : null}
             </div>
           </>

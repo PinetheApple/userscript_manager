@@ -44,7 +44,7 @@ export function useCurrentTab(): ICurrentTab {
       tabs.onActivated.removeListener(onActivated);
       tabs.onUpdated.removeListener(onUpdated);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return tab;
 }

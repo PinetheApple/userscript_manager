@@ -135,6 +135,7 @@ Manual verification checklist (see plan for full details):
 - Tailwind classes only — no inline styles except for dynamic values
 - No external UI libraries — all components are hand-rolled
 - KISS/DRY/SOLID/YAGNI: don't add features not in the plan
+- `react-hooks/exhaustive-deps` is intentionally not enforced — there is no ESLint config in this project. `useEffect` dependency arrays are written deliberately; do not add `eslint-disable` comments to suppress the rule.
 
 ## Manifest permissions philosophy
 

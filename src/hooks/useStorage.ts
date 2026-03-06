@@ -29,7 +29,7 @@ export function useStorage<T>(
 
     storage.onChanged.addListener(listener);
     return () => storage.onChanged.removeListener(listener);
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key]);
 
   const setValue = useCallback(
     async (newValue: T) => {
@@ -69,7 +69,7 @@ export function useSyncStorage<T>(
 
     storage.onChanged.addListener(listener);
     return () => storage.onChanged.removeListener(listener);
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key]);
 
   const setValue = useCallback(
     async (newValue: T) => {

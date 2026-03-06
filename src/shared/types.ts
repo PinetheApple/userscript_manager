@@ -4,9 +4,7 @@ export type TGrantType =
   | 'GM_deleteValue'
   | 'GM_listValues'
   | 'GM_xmlhttpRequest'
-  | 'GM_addStyle'
-  | 'GM_log'
-  | 'GM_info';
+  | 'GM_addStyle';
 
 export type TViewMode = 'popup' | 'sidebar' | 'window';
 

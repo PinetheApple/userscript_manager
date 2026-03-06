@@ -79,7 +79,7 @@ export function ScriptCard({ script, onToggle, onEdit, onDelete, onClearError, i
         {script.matchPatterns.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {script.matchPatterns.slice(0, 3).map((p, i) => (
-              <code key={i} className="text-xs bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono truncate max-w-[160px]">
+              <code key={i} className="text-xs bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono truncate max-w-40">
                 {p}
               </code>
             ))}

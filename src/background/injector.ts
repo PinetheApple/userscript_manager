@@ -2,12 +2,7 @@ import { scripting } from '../shared/browser-api';
 import { EXTENSION_VERSION } from '../shared/constants';
 import type { IUserScript, TGrantType } from '../shared/types';
 
-/**
- * Inject GM_ polyfill and user script into a tab's MAIN world.
- * Two sequential executeScript calls ensure polyfill exists before user code runs.
- */
 export async function injectScript(tabId: number, script: IUserScript): Promise<void> {
-  // Step 1: Install GM_ polyfill in MAIN world
   await scripting.executeScript({
     target: { tabId },
     world: 'MAIN',
@@ -15,7 +10,6 @@ export async function injectScript(tabId: number, script: IUserScript): Promise<
     args: [script.id, script.grants, script.name, script.version],
   });
 
-  // Step 2: Run user script in MAIN world
   await scripting.executeScript({
     target: { tabId },
     world: 'MAIN',
@@ -24,10 +18,6 @@ export async function injectScript(tabId: number, script: IUserScript): Promise<
   });
 }
 
-/**
- * Injected into MAIN world to install the GM_ polyfill.
- * NOTE: This function is serialized by chrome.scripting — no closures, no imports.
- */
 function installGMPolyfill(
   scriptId: string,
   grants: string[],
@@ -82,15 +72,6 @@ function installGMPolyfill(
           document.head.appendChild(el);
         }
       : undefined,
-    GM_log: grants.includes('GM_log')
-      ? (...logArgs: unknown[]) => {
-          console.log('[ScriptFlow]', ...logArgs);
-          window.postMessage(
-            { source: '__SF_MAIN__', scriptId, method: 'GM_log', args: logArgs, requestId: '' },
-            '*'
-          );
-        }
-      : undefined,
     GM_info: {
       script: { name: scriptName, version: scriptVersion },
       scriptHandler: 'ScriptFlow',
@@ -99,13 +80,8 @@ function installGMPolyfill(
   };
 }
 
-/**
- * Injected into MAIN world to run the user script.
- * NOTE: Serialized function — no closures, no imports.
- */
 function runUserScript(code: string, scriptId: string) {
-  // Capture originals before try so catch block can always log to DevTools
-  const _origError = console.error.bind(console);
+  const _nativeError = console.error.bind(console);
 
   try {
     const gm = (window as Window & { __SF_GM__?: Record<string, unknown> }).__SF_GM__;
@@ -113,31 +89,35 @@ function runUserScript(code: string, scriptId: string) {
 
     const {
       GM_getValue, GM_setValue, GM_deleteValue, GM_listValues,
-      GM_xmlhttpRequest, GM_addStyle, GM_log, GM_info,
+      GM_xmlhttpRequest, GM_addStyle, GM_info,
     } = gm;
 
-    // Relay console.log/warn/error to the extension console panel
-    const _origLog  = console.log.bind(console);
-    const relay = (type: 'log' | 'error', args: unknown[]) => {
-      _origLog(...args);
+    // Shadow `console` per-script so relay is always attributed to the right scriptId.
+    // Capturing originals here guarantees we call the real browser console, not
+    // a relay installed by another script that ran earlier on the same page.
+    const _log   = console.log.bind(console);
+    const _warn  = console.warn.bind(console);
+    const _err   = console.error.bind(console);
+    const post = (type: 'log' | 'error', args: unknown[]) =>
       window.postMessage({ source: '__SF_MAIN__', scriptId, method: '__SF_CONSOLE__', args: [type, ...args], requestId: '' }, '*');
+    const scriptConsole = {
+      log:   (...args: unknown[]) => { _log(...args);  post('log',   args); },
+      warn:  (...args: unknown[]) => { _warn(...args); post('log',   args); },
+      error: (...args: unknown[]) => { _err(...args);  post('error', args); },
     };
-    console.log   = (...args: unknown[]) => relay('log',   args);
-    console.warn  = (...args: unknown[]) => relay('log',   args);
-    console.error = (...args: unknown[]) => relay('error', args);
 
     new Function(
       'GM_getValue', 'GM_setValue', 'GM_deleteValue', 'GM_listValues',
-      'GM_xmlhttpRequest', 'GM_addStyle', 'GM_log', 'GM_info',
+      'GM_xmlhttpRequest', 'GM_addStyle', 'GM_info', 'console',
       code
     )(
       GM_getValue, GM_setValue, GM_deleteValue, GM_listValues,
-      GM_xmlhttpRequest, GM_addStyle, GM_log, GM_info
+      GM_xmlhttpRequest, GM_addStyle, GM_info, scriptConsole
     );
 
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
-    _origError('[ScriptFlow]', error);
+    _nativeError('[ScriptFlow]', error);
     window.postMessage(
       {
         source: '__SF_MAIN__',
@@ -151,7 +131,6 @@ function runUserScript(code: string, scriptId: string) {
   }
 }
 
-// Suppress unused variable warning — these are referenced as serialized functions
 void installGMPolyfill;
 void runUserScript;
 void EXTENSION_VERSION;

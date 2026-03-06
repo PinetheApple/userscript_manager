@@ -13,7 +13,7 @@ export interface IParsedMetadata {
 
 const VALID_GRANTS: TGrantType[] = [
   'GM_getValue', 'GM_setValue', 'GM_deleteValue', 'GM_listValues',
-  'GM_xmlhttpRequest', 'GM_addStyle', 'GM_log', 'GM_info',
+  'GM_xmlhttpRequest', 'GM_addStyle',
 ];
 
 const RUN_AT_MAP: Record<string, TRunAt> = {

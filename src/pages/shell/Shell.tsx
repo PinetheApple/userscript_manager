@@ -50,12 +50,8 @@ export function Shell() {
     chrome.tabs.create({ url });
   }
 
-  function openManager() {
-    chrome.runtime.openOptionsPage();
-  }
-
   return (
-    <div className={containerClass} style={{ background: '#09090b' }}>
+    <div className={`${containerClass} bg-base`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5 shrink-0">
         <div className="flex items-center gap-2">
@@ -71,15 +67,7 @@ export function Shell() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <ViewModeSwitcher />
-          <Button variant="ghost" size="sm" onClick={openManager} title="Open Manager">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" strokeLinecap="round" />
-              <path d="M12 8v4l3 3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Button>
-        </div>
+        <ViewModeSwitcher />
       </div>
 
       {/* Current page info */}

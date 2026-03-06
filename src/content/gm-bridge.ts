@@ -37,7 +37,7 @@ function handleMainWorldMessage(event: MessageEvent): void {
     return;
   }
 
-  if (method === 'GM_log' || method === '__SF_CONSOLE__') {
+  if (method === '__SF_CONSOLE__') {
     runtime.sendMessage({ type: 'CONSOLE_LOG', scriptId, args }).catch(() => {});
     return;
   }

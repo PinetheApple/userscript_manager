@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { EditorView } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Compartment } from '@codemirror/state';
 import { keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, historyKeymap, history, indentWithTab } from '@codemirror/commands';
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { jsLinter, lintGutter, gmCompletion } from './editorExtensions';
 import { useScripts } from '../../hooks/useScripts';
 import { MetadataForm } from '../../components/domain/MetadataForm';
 import { ConsolePanel } from '../../components/domain/ConsolePanel';
@@ -53,9 +54,12 @@ export function Editor() {
   const [showPanel, setShowPanel] = useState(true);
   const [panelHeight, setPanelHeight] = useState(PANEL_HEIGHT_DEFAULT);
 
+  const [wordWrap, setWordWrap] = useState(false);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  const wrapCompartment = useRef(new Compartment());
 
   // Load script
   useEffect(() => {
@@ -86,8 +90,10 @@ export function Editor() {
           crosshairCursor(),
           highlightActiveLine(),
           closeBrackets(),
-          autocompletion(),
+          autocompletion({ override: [gmCompletion] }),
           javascript({ typescript: false }),
+          jsLinter,
+          lintGutter(),
           oneDark,
           keymap.of([
             ...closeBracketsKeymap,
@@ -101,6 +107,7 @@ export function Editor() {
               setCode(update.state.doc.toString());
             }
           }),
+          wrapCompartment.current.of(wordWrap ? EditorView.lineWrapping : []),
           EditorView.theme({
             '&': { height: '100%' },
             '.cm-scroller': { overflow: 'auto', height: '100%' },
@@ -117,6 +124,13 @@ export function Editor() {
       viewRef.current = null;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync word wrap toggle into the editor
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: wrapCompartment.current.reconfigure(wordWrap ? EditorView.lineWrapping : []),
+    });
+  }, [wordWrap]);
 
   // Sync external code changes to editor (e.g. initial load)
   useEffect(() => {
@@ -175,11 +189,15 @@ export function Editor() {
         e.preventDefault();
         handleSave();
       }
+      if (e.key === 'z' && e.altKey) {
+        e.preventDefault();
+        setWordWrap(w => !w);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saving, script, code, scriptId]);
+  }, [saving, script, code, scriptId, wordWrap]);
 
   // ── Save ────────────────────────────────────────────────────────────────────
 
@@ -227,7 +245,7 @@ export function Editor() {
     : `calc(100vh - ${TOOLBAR_HEIGHT}px)`;
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#09090b' }}>
+    <div className="flex flex-col h-screen bg-base">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-border px-4 py-2 shrink-0">
         <div className="flex items-center gap-3">

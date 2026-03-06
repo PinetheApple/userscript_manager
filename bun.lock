@@ -8,15 +8,18 @@
         "@codemirror/autocomplete": "^6.18.3",
         "@codemirror/commands": "^6.7.1",
         "@codemirror/lang-javascript": "^6.2.2",
+        "@codemirror/lint": "^6.9.5",
         "@codemirror/state": "^6.5.0",
         "@codemirror/theme-one-dark": "^6.1.2",
         "@codemirror/view": "^6.35.3",
+        "acorn": "^8.16.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "webextension-polyfill": "^0.12.0",
       },
       "devDependencies": {
         "@tailwindcss/cli": "^4.0.0",
+        "@types/acorn": "^6.0.4",
         "@types/chrome": "^0.0.304",
         "@types/node": "^25.3.3",
         "@types/react": "^19.0.0",
@@ -217,6 +220,8 @@
 
     "@tailwindcss/oxide-win32-x64-msvc": ["@tailwindcss/oxide-win32-x64-msvc@4.2.1", "", { "os": "win32", "cpu": "x64" }, "sha512-rbO34G5sMWWyrN/idLeVxAZgAKWrn5LiR3/I90Q9MkA67s6T1oB0xtTe+0heoBvHSpbU9Mk7i6uwJnpo4u21XQ=="],
 
+    "@types/acorn": ["@types/acorn@6.0.4", "", { "dependencies": { "acorn": "*" } }, "sha512-DafqcBAjbOOmgqIx3EF9EAdBKAKgspv00aQVIW3fVQ0TXo5ZPBeSRey1SboVAUzjw8Ucm7cd1gtTSlosYoEQLA=="],
+
     "@types/chrome": ["@types/chrome@0.0.304", "", { "dependencies": { "@types/filesystem": "*", "@types/har-format": "*" } }, "sha512-ms9CLILU+FEMK7gcmgz/Mtn2E81YQWiMIzCFF8ktp98EVNIIfoqaDTD4+ailOCq1sGjbnEmfJxQ1FAsQtk5M3A=="],
 
     "@types/filesystem": ["@types/filesystem@0.0.36", "", { "dependencies": { "@types/filewriter": "*" } }, "sha512-vPDXOZuannb9FZdxgHnqSwAG/jvdGM8Wq+6N4D/d80z+D4HWH+bItqsZaVRQykAn6WEVeEkLm2oQigyHtgb0RA=="],
@@ -232,6 +237,8 @@
     "@types/react-dom": ["@types/react-dom@19.2.3", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ=="],
 
     "@types/webextension-polyfill": ["@types/webextension-polyfill@0.12.5", "", {}, "sha512-uKSAv6LgcVdINmxXMKBuVIcg/2m5JZugoZO8x20g7j2bXJkPIl/lVGQcDlbV+aXAiTyXT2RA5U5mI4IGCDMQeg=="],
+
+    "acorn": ["acorn@8.16.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw=="],
 
     "color": ["color@4.2.3", "", { "dependencies": { "color-convert": "^2.0.1", "color-string": "^1.9.0" } }, "sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A=="],
 

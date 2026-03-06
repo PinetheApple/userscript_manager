@@ -1,7 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { runtime } from '../../shared/browser-api';
 import { STORAGE_KEYS } from '../../shared/constants';
 import { useSyncStorage } from '../../hooks/useStorage';
-import { useToast } from '../ui/Toast';
 import type { IAppSettings, TViewMode } from '../../shared/types';
 
 const MODES: Array<{ value: TViewMode; label: string; icon: React.ReactNode }> = [
@@ -39,24 +39,35 @@ const MODES: Array<{ value: TViewMode; label: string; icon: React.ReactNode }> =
   },
 ];
 
-const MODE_MESSAGES: Record<TViewMode, string> = {
-  popup: 'Switched to popup mode',
-  sidebar: 'Switched to sidebar mode — click the extension icon again',
-  window: 'Switched to window mode — click the extension icon to open',
-};
-
 export function ViewModeSwitcher() {
   const [settings, setSettings] = useSyncStorage<IAppSettings>(
     STORAGE_KEYS.SETTINGS,
     { viewMode: 'popup' }
   );
-  const { showToast } = useToast();
+  const windowIdRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    chrome.windows.getCurrent().then(w => { windowIdRef.current = w.id; });
+  }, []);
 
   async function handleModeChange(mode: TViewMode) {
+    const currentMode = settings.viewMode ?? 'popup';
+    if (mode === currentMode) return;
+
+    // Open new view before any await to preserve user gesture context
+    if (mode === 'sidebar' && windowIdRef.current != null) {
+      chrome.sidePanel.open({ windowId: windowIdRef.current }).catch(console.error);
+    } else if (mode === 'window') {
+      chrome.tabs.create({ url: chrome.runtime.getURL('shell.html?view=window') });
+    }
+
     await setSettings({ ...settings, viewMode: mode });
-    // Inform SW to update action popup registration
-    await runtime.sendMessage({ type: 'SET_VIEW_MODE', mode });
-    showToast(MODE_MESSAGES[mode], 'info');
+    await runtime.sendMessage({ type: 'SET_VIEW_MODE', mode }).catch(() => {});
+
+    window.close();
+    chrome.tabs.getCurrent().then(tab => {
+      if (tab?.id != null) chrome.tabs.remove(tab.id);
+    }).catch(() => {});
   }
 
   const currentMode = settings.viewMode ?? 'popup';

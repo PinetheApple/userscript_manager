@@ -7,7 +7,7 @@ import type { TGrantType, TRunAt, IUserScript } from '../../shared/types';
 
 const GRANT_OPTIONS: TGrantType[] = [
   'GM_getValue', 'GM_setValue', 'GM_deleteValue', 'GM_listValues',
-  'GM_xmlhttpRequest', 'GM_addStyle', 'GM_log', 'GM_info',
+  'GM_xmlhttpRequest', 'GM_addStyle',
 ];
 
 const RUN_AT_OPTIONS: TRunAt[] = ['document-start', 'document-end', 'document-idle'];

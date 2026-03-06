@@ -4,10 +4,6 @@ import type { TGrantType, IGMXHRDetails, IGMXHRResponse } from '../shared/types'
 
 type GMArgs = unknown[];
 
-/**
- * Execute a GM_ method and return its result.
- * All methods are Promise-based.
- */
 export async function handleGMCall(
   method: TGrantType,
   args: GMArgs,
@@ -24,14 +20,6 @@ export async function handleGMCall(
       return handleListValues(scriptId);
     case 'GM_xmlhttpRequest':
       return handleXHR(args[0] as IGMXHRDetails);
-    case 'GM_log':
-      // GM_log is handled client-side; this is a no-op on SW side
-      return undefined;
-    case 'GM_addStyle':
-      // GM_addStyle is handled in MAIN world; this is a no-op on SW side
-      return undefined;
-    case 'GM_info':
-      return undefined;
     default:
       throw new Error(`Unknown GM method: ${method}`);
   }

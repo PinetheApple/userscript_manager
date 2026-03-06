@@ -6,10 +6,6 @@ import { getAllScripts, setScriptError, updateScript } from './script-registry';
 import { handleGMCall } from './gm-handler';
 import { injectScript } from './injector';
 
-// ── View mode management ──────────────────────────────────────────────────────
-
-// In-memory cache so onClicked can act synchronously (sidePanel.open requires
-// a user-gesture context — any await before calling it loses that context).
 let cachedViewMode: TViewMode = 'popup';
 
 async function loadViewMode(): Promise<TViewMode> {
@@ -29,19 +25,21 @@ async function setViewMode(mode: TViewMode): Promise<void> {
 async function applyViewMode(mode: TViewMode): Promise<void> {
   if (mode === 'popup') {
     await action.setPopup({ popup: 'shell.html' });
-  } else {
-    // Remove popup so onClicked fires
+    await sidePanel.setOptions({ enabled: false });
+  } else if (mode === 'sidebar') {
     await action.setPopup({ popup: '' });
+    await sidePanel.setOptions({ enabled: true });
+  } else {
+    await action.setPopup({ popup: '' });
+    await sidePanel.setOptions({ enabled: false });
   }
 }
 
-// Load and apply persisted view mode on SW startup
 loadViewMode().then(mode => {
   cachedViewMode = mode;
   return applyViewMode(mode);
 }).catch(console.error);
 
-// Keep cache in sync when storage changes (e.g. from another window)
 storage.onChanged.addListener((changes, area) => {
   if (area === 'sync' && STORAGE_KEYS.SETTINGS in changes) {
     const settings = changes[STORAGE_KEYS.SETTINGS].newValue as IAppSettings | undefined;
@@ -49,8 +47,6 @@ storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// Handle icon click when popup is unregistered (sidebar/window mode).
-// Must call sidePanel.open() synchronously — no awaits before it.
 action.onClicked.addListener((tab) => {
   if (cachedViewMode === 'sidebar') {
     const windowId = tab.windowId;
@@ -77,7 +73,7 @@ chrome.runtime.onMessage.addListener(
         handleGetScriptsForURL(msg as { type: 'GET_SCRIPTS_FOR_URL'; url: string }, sender)
           .then(sendResponse)
           .catch(err => sendResponse({ error: String(err) }));
-        return true; // async
+        return true;
 
       case 'GM_CALL':
         handleGMCallMessage(msg as { type: 'GM_CALL'; requestId: string; scriptId: string; method: string; args: unknown[] })
@@ -106,7 +102,6 @@ chrome.runtime.onMessage.addListener(
         sendResponse({ mode: cachedViewMode });
         return false;
 
-      // CRUD operations from the UI
       case 'GET_ALL_SCRIPTS':
         getAllScripts()
           .then(scripts => sendResponse({ scripts }))
@@ -204,8 +199,3 @@ async function broadcastConsoleEntry(msg: { scriptId: string; args: unknown[] })
   });
 }
 
-// ── Side panel setup ─────────────────────────────────────────────────────────
-
-if (chrome.sidePanel) {
-  chrome.sidePanel.setOptions({ enabled: true }).catch(console.error);
-}
